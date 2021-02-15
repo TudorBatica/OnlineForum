@@ -74,7 +74,7 @@ namespace Forum
             
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<IForumRepository, SqlForumRepository>();
+            //services.AddScoped<IForumRepository, SqlForumRepository>();
             services.AddScoped<IDiscussionRepliesRepository, DiscussionRepliesRepository>();
             services.AddScoped<IDiscussionRepository, DiscussionsRepository>();
         }
