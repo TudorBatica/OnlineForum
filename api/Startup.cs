@@ -74,9 +74,9 @@ namespace Forum
             
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            //services.AddScoped<IForumRepository, SqlForumRepository>();
             services.AddScoped<IDiscussionRepliesRepository, DiscussionRepliesRepository>();
             services.AddScoped<IDiscussionRepository, DiscussionsRepository>();
+            services.AddScoped<ICareersRepository, CareersRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
