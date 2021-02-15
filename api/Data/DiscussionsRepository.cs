@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using Forum.Models;
 using Microsoft.EntityFrameworkCore;
 using Predicate = System.Linq.Expressions.Expression<System.Func<Forum.Models.Discussion, bool>>;
@@ -14,17 +13,19 @@ namespace Forum.Data
         {
         }
 
-        public IEnumerable<Discussion> GetDiscussionsUsingParameters(
+        public PagedList<Discussion> GetDiscussionsUsingParameters(
             IEnumerable<Predicate> filters,
             string sortParam,
-            bool orderAscending)
+            bool orderAscending,
+            int page,
+            int pageSize)
         {
             IQueryable<Discussion> discussions = Context.Set<Discussion>()
                                                 .Include(d => d.Career).Include(d => d.DiscussionType);
             discussions = Filter(discussions, filters);
             discussions = Sort(discussions, sortParam, orderAscending);
             
-            return discussions.ToList();
+            return PagedList<Discussion>.ToPagedList(discussions, page, pageSize);
         }
         private IQueryable<Discussion> Filter(IQueryable<Discussion> discussions, IEnumerable<Predicate> filters)
         {

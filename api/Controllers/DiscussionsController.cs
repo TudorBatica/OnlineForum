@@ -8,6 +8,7 @@ using Forum.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Predicate = System.Linq.Expressions.Expression<System.Func<Forum.Models.Discussion, bool>>;
 
 namespace Forum.Controllers
@@ -33,7 +34,7 @@ namespace Forum.Controllers
         {
             try 
             {
-                verifySortParameters(sort, order);
+                VerifySortParameters(sort, order);
             }
             catch(ArgumentException e)
             {
@@ -43,8 +44,21 @@ namespace Forum.Controllers
             var discussions = _repository.GetDiscussionsUsingParameters(
                 filters: QueryParametersToPredicates(query, disctype, career),
                 sortParam: sort,
-                orderAscending: order.ToLower().Equals("asc") ? true : false
+                orderAscending: order.ToLower().Equals("asc") ? true : false,
+                page: page,
+                pageSize: pagesize
             );
+            
+            var meta = new 
+            {
+                discussions.TotalCount,
+                discussions.PageSize,
+                discussions.CurrentPage,
+                discussions.PageCount,
+                discussions.HasNext,
+                discussions.HasPrevious
+            };
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(meta));
             
             return Ok(_mapper.Map<IEnumerable<DiscussionReadDto>>(discussions));
         }
@@ -196,7 +210,7 @@ namespace Forum.Controllers
             return d => careers.Contains(d.CareerId);
         }
         [NonAction]
-        private void verifySortParameters(string sortBy, string order)
+        private void VerifySortParameters(string sortBy, string order)
         {
             if(!sortBy.ToLower().Equals("views") && !sortBy.ToLower().Equals("date"))
             {

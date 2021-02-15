@@ -6,8 +6,10 @@ namespace Forum.Data
 {
     public interface IDiscussionRepository : IRepository<Discussion>
     {
-        IEnumerable<Discussion> GetDiscussionsUsingParameters(IEnumerable<Predicate> filters,
+        PagedList<Discussion> GetDiscussionsUsingParameters(IEnumerable<Predicate> filters,
             string sortParam,
-            bool orderAscending);
+            bool orderAscending,
+            int page,
+            int pageSize);
     }
 }
