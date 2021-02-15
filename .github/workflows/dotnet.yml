@@ -5,7 +5,7 @@ on:
     branches: [ backend ]
   
   pull_request:
-    branches: [ main ]
+    branches: [ main, backend ]
 
 jobs:
   build:
