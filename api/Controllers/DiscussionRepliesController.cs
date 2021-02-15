@@ -51,8 +51,7 @@ namespace Forum.Controllers
         public ActionResult<DiscussionReplyReadDto> CreateDiscussionReply(DiscussionReplyCreateDto discussionReplyCreateDto)
         {
             var discussionReplyModel = _mapper.Map<DiscussionReply>(discussionReplyCreateDto);
-            var x = this.User.Identity.Name;
-            discussionReplyModel.Username = x;
+            discussionReplyModel.Username = this.User.Identity.Name;
             discussionReplyModel.DiscussionReplyDateTime = DateTime.Now;
 
             _repository.CreateDiscussionReply(discussionReplyModel);
