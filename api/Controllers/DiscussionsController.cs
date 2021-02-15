@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
@@ -7,6 +8,8 @@ using Forum.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Predicate = System.Linq.Expressions.Expression<System.Func<Forum.Models.Discussion, bool>>;
 
 namespace Forum.Controllers
 {
@@ -14,10 +17,10 @@ namespace Forum.Controllers
     [ApiController]
     public class DiscussionsController : ControllerBase
     {
-        private readonly IForumRepository _repository;
+        private readonly IDiscussionRepository _repository;
         private readonly IMapper _mapper;
 
-        public DiscussionsController(IForumRepository repository, IMapper mapper)
+        public DiscussionsController(IDiscussionRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
@@ -25,34 +28,46 @@ namespace Forum.Controllers
 
         //GET api/discussions
         [HttpGet]
-        ///<param name = "q"> title query string  </param>
-        ///<param name = "s"> sort by param; should be "views" or "date" </param>
-        ///<param name = "o"> sorting order; should be "asc" for ascending or "desc" for descending </param>
-        ///<param name = "dt"> discussion type filter; for multiple types use "," to separate them; eg: dt=1,2 </param>
-        ///<param name = "cr"> career filter; for multiple careers use "," to separate them; eg: cr=1,2 </param>
-        ///<param name = "p"> page </param>
-        ///<param name = "ps"> page size </param>
-        ///<param name = "e"> whether or not to embed the discussion replies </param>
-        public ActionResult<IEnumerable<DiscussionReadDto>> GetAllDiscussions(string q = "", string s = "views", string o = "asc", 
-                                                            string dt = null, string cr = null, int p = 1, int ps = 10,
-                                                            string e = "false")
-
+        public ActionResult<IEnumerable<DiscussionReadDto>> GetAllDiscussions(
+            string query = "", string sort = "date", string order = "asc", string disctype = null, string career = null,
+            int page = 1, int pagesize = 10)
         {
-            var careers = string.IsNullOrWhiteSpace(cr) ? new List<int>() : cr.Split(',').Select(int.Parse).ToList();
-            var discussionTypes = string.IsNullOrWhiteSpace(dt) ? new List<int>() : dt.Split(',').Select(int.Parse).ToList();
-
-            var discussions = _repository.GetAllDiscussions(query: q, sortBy: s, sortOrder: o, 
-                                                            discussionTypes: discussionTypes, careers: careers,
-                                                            page: p, pageSize: ps, embed: e);
+            try 
+            {
+                VerifySortParameters(sort, order);
+            }
+            catch(ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            
+            var discussions = _repository.GetDiscussionsUsingParameters(
+                filters: QueryParametersToPredicates(query, disctype, career),
+                sortParam: sort,
+                orderAscending: order.ToLower().Equals("asc") ? true : false,
+                page: page,
+                pageSize: pagesize
+            );
+            
+            var meta = new 
+            {
+                discussions.TotalCount,
+                discussions.PageSize,
+                discussions.CurrentPage,
+                discussions.PageCount,
+                discussions.HasNext,
+                discussions.HasPrevious
+            };
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(meta));
             
             return Ok(_mapper.Map<IEnumerable<DiscussionReadDto>>(discussions));
         }
 
         //GET api/discussions/{id}
         [HttpGet("{id}", Name = "GetDiscussionById")]
-        public ActionResult<DiscussionReadDto> GetDiscussionById(int id, string e = "true")
+        public ActionResult<DiscussionReadDto> GetDiscussionById(int id)
         {
-            var discussion = _repository.GetDiscussionById(id, embed: e);
+            var discussion = _repository.GetById(id);
             if(discussion is null) 
             {
                 return NotFound();
@@ -65,14 +80,14 @@ namespace Forum.Controllers
         [HttpPost]
         public ActionResult<DiscussionReadDto> CreateDiscussion(DiscussionCreateDto discussionCreateDto)
         {
-            var discussionModel = _mapper.Map<Discussion>(discussionCreateDto);
-            discussionModel.Username = this.User.Identity.Name;
-            discussionModel.DiscussionDateTime = System.DateTime.Now;
+            var discussion = _mapper.Map<Discussion>(discussionCreateDto);
+            discussion.Username = this.User.Identity.Name;
+            discussion.DiscussionDateTime = System.DateTime.Now;
             
-            _repository.CreateDiscussion(discussionModel);
+            _repository.Add(discussion);
             _repository.SaveChanges();
             
-            var discussionReadDto = _mapper.Map<DiscussionReadDto>(_repository.GetDiscussionById(discussionModel.DiscussionId, "false"));
+            var discussionReadDto = _mapper.Map<DiscussionReadDto>(_repository.GetById(discussion.DiscussionId));
 
             return CreatedAtRoute(nameof(GetDiscussionById), new {Id = discussionReadDto.DiscussionId}, discussionReadDto);
         }
@@ -82,7 +97,7 @@ namespace Forum.Controllers
         [HttpPut("{id}")]
         public ActionResult UpdateDiscussion(int id, DiscussionCreateDto discussionUpdateDto)
         {
-            var discussionModel = _repository.GetDiscussionById(id, "false");
+            var discussionModel = _repository.GetById(id);
             
             if(discussionModel is null)
             {
@@ -95,7 +110,6 @@ namespace Forum.Controllers
             }
             
             _mapper.Map(discussionUpdateDto, discussionModel);
-            _repository.UpdateDiscussion(discussionModel);
             _repository.SaveChanges();
             
             return NoContent();
@@ -106,7 +120,7 @@ namespace Forum.Controllers
         [HttpPatch("{id}")]
         public ActionResult PartialUpdateDiscussion(int id, JsonPatchDocument<DiscussionCreateDto> patchDocument)
         {
-            var discussionModel = _repository.GetDiscussionById(id, "false");
+            var discussionModel = _repository.GetById(id);
             
             if(discussionModel is null)
             {
@@ -126,7 +140,6 @@ namespace Forum.Controllers
             }
 
             _mapper.Map(discussionToPatch, discussionModel);
-            _repository.UpdateDiscussion(discussionModel);
             _repository.SaveChanges();
 
             return NoContent();
@@ -137,7 +150,7 @@ namespace Forum.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteDiscussion(int id)
         {
-            var discussion = _repository.GetDiscussionById(id, "false");
+            var discussion = _repository.GetById(id);
             
             if(discussion is null) 
             {
@@ -149,10 +162,64 @@ namespace Forum.Controllers
                 return Unauthorized();
             }
 
-            _repository.DeleteDiscussion(discussion);
+            _repository.Delete(discussion);
             _repository.SaveChanges();
 
             return NoContent();
+        }
+
+        [NonAction]
+        private IEnumerable<Predicate> QueryParametersToPredicates(string query, string disctype, string career)
+        {
+            var filters = new List<Predicate>();
+            
+            if(!string.IsNullOrWhiteSpace(query))
+            {
+                filters.Add(QueryStringToPredicate(query));
+            }
+            if(!string.IsNullOrWhiteSpace(disctype))
+            {
+                filters.Add(DiscussionTypeParameterToPredicate(disctype));
+            }
+            if(!string.IsNullOrWhiteSpace(career))
+            {
+                filters.Add(CareerParameterToPredicate(career));
+            }
+
+            return filters;
+        }
+        [NonAction]
+        private Predicate QueryStringToPredicate(string query)
+        {
+            return d => (d.Title.ToLower().Contains(query) || d.Description.ToLower().Contains(query));
+        }
+        [NonAction]
+        private Predicate DiscussionTypeParameterToPredicate(string disctype)
+        {
+            var discussionTypes = string.IsNullOrWhiteSpace(disctype) ? new List<int>() 
+                                    : disctype.Split(',').Select(int.Parse).ToList();
+            
+            return d => discussionTypes.Contains(d.DiscussionTypeId);
+        }
+        [NonAction]
+        private Predicate CareerParameterToPredicate(string career)
+        {
+            var careers = string.IsNullOrWhiteSpace(career) ? new List<int>() 
+                            : career.Split(',').Select(int.Parse).ToList();
+            
+            return d => careers.Contains(d.CareerId);
+        }
+        [NonAction]
+        private void VerifySortParameters(string sortBy, string order)
+        {
+            if(!sortBy.ToLower().Equals("views") && !sortBy.ToLower().Equals("date"))
+            {
+                throw new ArgumentException("Invalid sort by argument. Must be 'views' or 'date'.");
+            }
+            if(!order.ToLower().Equals("asc") && !order.ToLower().Equals("desc"))
+            {
+                throw new ArgumentException("Invalid order argument. Must be 'asc' or 'desc'");
+            }
         }
     }   
 }

@@ -14,10 +14,10 @@ namespace Forum.Controllers
     [ApiController]
     public class DiscussionRepliesController : ControllerBase
     {
-        private readonly IForumRepository _repository;
+        private readonly IDiscussionRepliesRepository _repository;
         private readonly IMapper _mapper;
 
-        public DiscussionRepliesController(IForumRepository repository, IMapper mapper)
+        public DiscussionRepliesController(IDiscussionRepliesRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
@@ -25,9 +25,19 @@ namespace Forum.Controllers
         
         //GET api/discussionreplies
         [HttpGet]
-        public ActionResult<IEnumerable<DiscussionReplyReadDto>> GetAllDiscusionReplies(int? did = null)
+        public ActionResult<IEnumerable<DiscussionReplyReadDto>> GetAllDiscusionReplies(int? did)
         {
-            var replies = _repository.GetAllDiscussionReplies(did);
+            IEnumerable<DiscussionReply> replies;
+            
+            if(did is null)
+            {
+                replies = _repository.GetAll();
+            } 
+            else 
+            {
+                replies = _repository.GetDiscussionRepliesByDiscussionId((int) did);
+            }
+
             return Ok(_mapper.Map<IEnumerable<DiscussionReplyReadDto>>(replies));
         }
 
@@ -35,7 +45,7 @@ namespace Forum.Controllers
         [HttpGet("{id}", Name = "GetDiscussionReplyById")]
         public ActionResult GetDiscussionReplyById(int id)
         {
-            var discussionReply = _repository.GetDiscussionReplyById(id);
+            var discussionReply = _repository.GetById(id);
             
             if(discussionReply is null)
             {
@@ -50,14 +60,14 @@ namespace Forum.Controllers
         [HttpPost]
         public ActionResult<DiscussionReplyReadDto> CreateDiscussionReply(DiscussionReplyCreateDto discussionReplyCreateDto)
         {
-            var discussionReplyModel = _mapper.Map<DiscussionReply>(discussionReplyCreateDto);
-            discussionReplyModel.Username = this.User.Identity.Name;
-            discussionReplyModel.DiscussionReplyDateTime = DateTime.Now;
+            var discussionReply = _mapper.Map<DiscussionReply>(discussionReplyCreateDto);
+            discussionReply.Username = this.User.Identity.Name;
+            discussionReply.DiscussionReplyDateTime = DateTime.Now;
 
-            _repository.CreateDiscussionReply(discussionReplyModel);
+            _repository.Add(discussionReply);
             _repository.SaveChanges();
 
-            var discussionReplyReadDto = _mapper.Map<DiscussionReplyReadDto>(discussionReplyModel);
+            var discussionReplyReadDto = _mapper.Map<DiscussionReplyReadDto>(discussionReply);
 
             return CreatedAtRoute(nameof(GetDiscussionReplyById), 
                                 new {Id = discussionReplyReadDto.DiscussionReplyId}, discussionReplyReadDto);
@@ -68,7 +78,7 @@ namespace Forum.Controllers
         [HttpPut("{id}")]
         public ActionResult UpdateDiscussion(int id, DiscussionReplyUpdateDto updatedDiscussionReply)
         {
-            var reply = _repository.GetDiscussionReplyById(id);
+            var reply = _repository.GetById(id);
 
             if(reply is null)
             {
@@ -81,7 +91,6 @@ namespace Forum.Controllers
             }
 
             _mapper.Map(updatedDiscussionReply, reply);
-            _repository.UpdateDiscussionReply(reply);
             _repository.SaveChanges();
 
             return NoContent();
@@ -92,7 +101,7 @@ namespace Forum.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteDiscussionReply(int id)
         {
-            var reply = _repository.GetDiscussionReplyById(id);
+            var reply = _repository.GetById(id);
             
             if(reply is null)
             {
@@ -104,7 +113,7 @@ namespace Forum.Controllers
                 return Unauthorized();
             }
            
-            _repository.DeleteDiscussionReply(reply);
+            _repository.Delete(reply);
             _repository.SaveChanges();
 
             return NoContent();

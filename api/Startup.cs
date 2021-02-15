@@ -7,6 +7,7 @@ using AutoMapper;
 using Forum.Authentication;
 using Forum.Data;
 using Forum.Middleware;
+using Forum.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -38,15 +39,14 @@ namespace Forum
         {
             services.AddDbContext<ForumContext>(options => options.UseSqlServer(
                 Configuration.GetConnectionString("ForumConnection")));
-            
+
             services.AddControllers().AddNewtonsoftJson(
                 s => s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
             
             services.AddIdentity<ApplicationUser, IdentityRole>()  
                 .AddEntityFrameworkStores<ForumContext>()  
                 .AddDefaultTokenProviders(); 
-
-            // Adding Authentication  
+  
             services.AddAuthentication(options =>  
             {  
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
@@ -74,7 +74,10 @@ namespace Forum
             
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<IForumRepository, SqlForumRepository>();
+            services.AddScoped<IDiscussionRepliesRepository, DiscussionRepliesRepository>();
+            services.AddScoped<IDiscussionRepository, DiscussionsRepository>();
+            services.AddScoped<ICareersRepository, CareersRepository>();
+            services.AddScoped<IDiscussionTypesRepository, DiscussionTypesRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
