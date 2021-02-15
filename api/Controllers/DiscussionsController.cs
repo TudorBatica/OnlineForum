@@ -25,25 +25,16 @@ namespace Forum.Controllers
 
         //GET api/discussions
         [HttpGet]
-        ///<param name = "q"> title query string  </param>
-        ///<param name = "s"> sort by param; should be "views" or "date" </param>
-        ///<param name = "o"> sorting order; should be "asc" for ascending or "desc" for descending </param>
-        ///<param name = "dt"> discussion type filter; for multiple types use "," to separate them; eg: dt=1,2 </param>
-        ///<param name = "cr"> career filter; for multiple careers use "," to separate them; eg: cr=1,2 </param>
-        ///<param name = "p"> page </param>
-        ///<param name = "ps"> page size </param>
-        ///<param name = "e"> whether or not to embed the discussion replies </param>
-        public ActionResult<IEnumerable<DiscussionReadDto>> GetAllDiscussions(string q = "", string s = "views", string o = "asc", 
-                                                            string dt = null, string cr = null, int p = 1, int ps = 10,
-                                                            string e = "false")
+        public ActionResult<IEnumerable<DiscussionReadDto>> GetAllDiscussions(string query = "", string sort = "views", string order = "asc", 
+                                                            string disctype = null, string career = null, int page = 1, int pagesize = 10,
+                                                            string embed = "false")
 
         {
-            var careers = string.IsNullOrWhiteSpace(cr) ? new List<int>() : cr.Split(',').Select(int.Parse).ToList();
-            var discussionTypes = string.IsNullOrWhiteSpace(dt) ? new List<int>() : dt.Split(',').Select(int.Parse).ToList();
+            var careers = string.IsNullOrWhiteSpace(career) ? new List<int>() : career.Split(',').Select(int.Parse).ToList();
+            var discussionTypes = string.IsNullOrWhiteSpace(disctype) ? new List<int>() : disctype.Split(',').Select(int.Parse).ToList();
 
-            var discussions = _repository.GetAllDiscussions(query: q, sortBy: s, sortOrder: o, 
-                                                            discussionTypes: discussionTypes, careers: careers,
-                                                            page: p, pageSize: ps, embed: e);
+            var discussions = _repository.GetAllDiscussions(query, sort, order, discussionTypes, careers,
+                                                            page, pagesize, embed);
             
             return Ok(_mapper.Map<IEnumerable<DiscussionReadDto>>(discussions));
         }
