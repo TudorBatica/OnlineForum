@@ -3,6 +3,10 @@
 
 name: Node.js CI
 
+defaults:
+  run:
+    working-directory: ./app
+
 on:
   push:
     branches: [ frontend ]
