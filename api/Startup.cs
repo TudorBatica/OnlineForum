@@ -1,24 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using AutoMapper;
-using Forum.Authentication;
 using Forum.Data;
 using Forum.Middleware;
 using Forum.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
@@ -78,6 +71,11 @@ namespace Forum
             services.AddScoped<IDiscussionRepository, DiscussionsRepository>();
             services.AddScoped<ICareersRepository, CareersRepository>();
             services.AddScoped<IDiscussionTypesRepository, DiscussionTypesRepository>();
+
+            services.AddCors(c => 
+            {
+                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,7 +102,8 @@ namespace Forum
             {
                 endpoints.MapControllers();
             });
-    
+
+            app.UseCors(options => options.AllowAnyOrigin());
         }
     }
 }

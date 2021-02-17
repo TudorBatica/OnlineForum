@@ -1,4 +1,4 @@
-using Forum.Authentication;
+
 using Forum.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Forum.Authentication
+namespace Forum.Dtos
 {
-    public class RegisterModel
+    public class ApplicationUserRegisterDto
     {
-        [Required(ErrorMessage = "User Name is required")]  
+        [Required(ErrorMessage = "Username is required")]  
         public string Username { get; set; }  
   
         [EmailAddress]  
