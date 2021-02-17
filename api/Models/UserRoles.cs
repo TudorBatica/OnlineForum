@@ -1,4 +1,4 @@
-namespace Forum.Authentication
+namespace Forum.Models
 {
     public static class UserRoles  
     {  

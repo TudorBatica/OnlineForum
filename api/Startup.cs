@@ -1,9 +1,9 @@
 using System;
 using System.Text;
 using AutoMapper;
-using Forum.Authentication;
 using Forum.Data;
 using Forum.Middleware;
+using Forum.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
