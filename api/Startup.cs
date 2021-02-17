@@ -71,6 +71,11 @@ namespace Forum
             services.AddScoped<IDiscussionRepository, DiscussionsRepository>();
             services.AddScoped<ICareersRepository, CareersRepository>();
             services.AddScoped<IDiscussionTypesRepository, DiscussionTypesRepository>();
+
+            services.AddCors(c => 
+            {
+                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -97,7 +102,8 @@ namespace Forum
             {
                 endpoints.MapControllers();
             });
-    
+
+            app.UseCors(options => options.AllowAnyOrigin());
         }
     }
 }
