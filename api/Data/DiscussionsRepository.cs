@@ -13,6 +13,16 @@ namespace Forum.Data
         {
         }
 
+        public new Discussion GetById(int id)
+        {
+            return Context.Set<Discussion>()
+            .Include(d => d.Career)
+            .Include(d => d.DiscussionType)
+            .Include(d => d.DiscussionReplies)
+            .Where(d => d.DiscussionId == id)
+            .FirstOrDefault();
+        }
+
         public PagedList<Discussion> GetDiscussionsUsingParameters(
             IEnumerable<Predicate> filters,
             string sortParam,
