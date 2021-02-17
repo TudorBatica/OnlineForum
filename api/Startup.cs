@@ -35,36 +35,36 @@ namespace Forum
 
             services.AddControllers().AddNewtonsoftJson(
                 s => s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
-            
-            services.AddIdentity<ApplicationUser, IdentityRole>()  
-                .AddEntityFrameworkStores<ForumContext>()  
-                .AddDefaultTokenProviders(); 
-  
-            services.AddAuthentication(options =>  
-            {  
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;  
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;  
-            })   
-            .AddJwtBearer(options =>  
-            {  
-                options.SaveToken = true;  
-                options.RequireHttpsMetadata = false;  
-                options.TokenValidationParameters = new TokenValidationParameters()  
-                {  
-                    ValidateIssuer = true,  
-                    ValidateAudience = true,  
-                    ValidAudience = Configuration["JWT:ValidAudience"],  
-                    ValidIssuer = Configuration["JWT:ValidIssuer"],  
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))  
-                };  
-            });  
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ForumContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["JWT:ValidAudience"],
+                    ValidIssuer = Configuration["JWT:ValidIssuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
+                };
+            });
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Forum", Version = "v1" });
             });
-            
+
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<IDiscussionRepliesRepository, DiscussionRepliesRepository>();
@@ -72,15 +72,18 @@ namespace Forum
             services.AddScoped<ICareersRepository, CareersRepository>();
             services.AddScoped<IDiscussionTypesRepository, DiscussionTypesRepository>();
 
-            services.AddCors(c => 
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
-                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
-            });
+                builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+            }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseCors("MyPolicy");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -103,7 +106,7 @@ namespace Forum
                 endpoints.MapControllers();
             });
 
-            app.UseCors(options => options.AllowAnyOrigin());
+            
         }
     }
 }
