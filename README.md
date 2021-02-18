@@ -30,5 +30,5 @@ To use it:
 1. Restore `.env`  
 2. Restore dependencies:  
   - use `npm i`  
-3. Deployment:
+3. Deployment:  
   - locally: use `npm start`
