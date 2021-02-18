@@ -29,6 +29,6 @@ The implementation is located in the `app/` directory.
 To use it:  
 1. Restore `.env`  
 2. Restore dependencies:  
-  - use `npm i`  
+  - use `npm i`  
 3. Deployment:  
   - locally: use `npm start`
