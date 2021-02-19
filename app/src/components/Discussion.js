@@ -1,7 +1,9 @@
+import { useParams } from 'react-router-dom';
 import DiscussionCard from '../components/DiscussionCard';
 import useFetchDiscusion from "../hooks/useFetchDiscussion";
 
-const Discussion = id => {
+const Discussion = () => {
+    const {id} = useParams();
     const { data: discussion, isLoading, error } = useFetchDiscusion(id);
     
     return (
