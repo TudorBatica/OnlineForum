@@ -4,7 +4,6 @@
 
 ![SQL Server badge](https://img.shields.io/badge/Powered%20by-SQL%20Server-blue)
 ![.NET badge](https://img.shields.io/badge/Built%20with-.NET%20Core-blueviolet)
-![React.js badge](https://img.shields.io/badge/Completed%20with-React.js-blue)
 
 An online forum where users can discuss their careers.  
 
