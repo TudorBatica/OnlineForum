@@ -5,6 +5,7 @@ const useFetch = (endpoint, header = null) => {
     const [responseHeaders, setResponseHeader] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const url = process.env.REACT_APP_API_BASE + endpoint;
 
     const handleFetchedData = (fetchedData) => {
         setIsLoading(false);
@@ -45,12 +46,11 @@ const useFetch = (endpoint, header = null) => {
 
     useEffect(() => {
         const abortCtrl = new AbortController();
-        const url = process.env.REACT_APP_API_BASE + endpoint;
 
         fetchData(url, header, abortCtrl);
 
         return () => abortCtrl.abort();
-    }, []);
+    }, [url]);
 
     return { data, isLoading, error, responseHeaders }
 }

@@ -1,10 +1,14 @@
+import DiscussionListTile from './DiscussionListTile';
+import { Link } from "react-router-dom";
+
 const DiscussionsList = ({ discussions }) => {
     return (
         <div>
             {discussions?.map((discussion) => (
                 <div key={discussion.discussionId}>
-                    <h2>{discussion.title}</h2>
-                    <p>{discussion.description}</p>
+                    <Link to={`/discussion/${discussion.discussionId}`}>
+                        <DiscussionListTile discussion={discussion} />
+                    </Link>
                 </div>
             ))}
         </div>
