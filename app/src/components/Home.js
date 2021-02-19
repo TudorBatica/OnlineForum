@@ -1,18 +1,20 @@
-import useFetch from '../hooks/useFetch';
-import PostsList from './PostsList';
+import useFetchDiscussionsPage from '../hooks/useFetchDiscussionsPage';
+import DiscussionsList from './DiscussionsList';
+import Pagination from '@material-ui/lab/Pagination';
 
 const Home = () => {
-    const {data: tasks, isLoading, error} = useFetch('http://localhost:5000/api/discussions');
-    console.log(tasks)
+    
+    const { data: discussions, isLoading, error, responseHeaders } = useFetchDiscussionsPage(1, 2);
+    console.log(responseHeaders?.get('Content-Length'));
     return (
         <div className="home">
             {error && <div>{error}</div>}
-            {isLoading && <div>Loading Tasks...</div>}
-            <p>{tasks}</p>
+            {isLoading && <div>Loading...</div>}
+            <DiscussionsList discussions={discussions}></DiscussionsList>
+            <Pagination count={3} variant="outlined" color="primary" onChange={(_, page) => console.log(`change to ${page}`)} />
         </div>
-    );
-} 
- 
-export default Home;
 
-//<PostsList tasks = {tasks}/>
+    );
+}
+
+export default Home;
